@@ -1,0 +1,9 @@
+LICENSE
+MANIFEST
+META.yml
+Makefile.PL
+README
+dist.ini
+lib/Catalyst/Plugin/StatusMessage.pm
+lib/Catalyst/Plugin/StatusMessageTypeRole.pm
+t/status_message.t
