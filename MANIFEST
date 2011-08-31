@@ -6,4 +6,6 @@ README
 dist.ini
 lib/Catalyst/Plugin/StatusMessage.pm
 lib/Catalyst/Plugin/StatusMessageTypeRole.pm
+t/author/pod-coverage.t
+t/author/pod.t
 t/status_message.t

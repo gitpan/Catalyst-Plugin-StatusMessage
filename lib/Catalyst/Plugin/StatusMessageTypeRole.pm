@@ -54,3 +54,43 @@ role {
 
 __END__
 
+=pod
+
+=head1 NAME
+
+Catalyst::Plugin::StatusMessageTypeRole - A Moose Role to do the actual saving and retrieval of status and error messages. 
+
+
+=head1 SYNOPSIS
+
+    package Catalyst::Plugin::StatusMessage;
+    
+    use Moose;
+    
+    with 'Catalyst::Plugin::StatusMessageTypeRole' => {
+        type    => 'status_msg',
+        handles => [qw/get_status_msg set_status_msg/],
+    };
+    
+    ...
+
+
+=head1 DESCRIPTION
+
+A parameterized Moose Role that saves and retrieves status messages
+to/from the Catalyst session.  Each message is associated with a random
+token to prevent the wrong message showing up on two screens.  The
+message is removed after the first time it is retrieved.
+
+
+=head1 AUTHOR
+
+Kennedy Clark, hkclark@gmail.com
+
+
+=head1 COPYRIGHT
+
+This library is free software. You can redistribute it and/or modify it under the same terms as Perl itself.
+
+=cut
+
