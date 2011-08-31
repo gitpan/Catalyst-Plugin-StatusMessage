@@ -1,7 +1,7 @@
 package Catalyst::Plugin::StatusMessage;
 
 BEGIN {
-    $Catalyst::Plugin::StatusMessage::VERSION = '0.001000';
+    $Catalyst::Plugin::StatusMessage::VERSION = '0.003000';
 }
 # ABSTRACT: Handle passing of status (success and error) messages between screens
 
@@ -21,6 +21,21 @@ has 'token_param' => (
     isa     => 'Str',
     default => 'mid', # For "Message ID"
 );
+
+# The stash key where status messages are loaded
+has 'status_msg_stash_key' => (
+    is      => 'ro',
+    isa     => 'Str',
+    default => 'status_msg',
+);
+
+# The stash key where status messages are loaded
+has 'error_msg_stash_key' => (
+    is      => 'ro',
+    isa     => 'Str',
+    default => 'error_msg',
+);
+
 
 # Holds and handles normal (non-error) messages
 with 'Catalyst::Plugin::StatusMessageTypeRole' => {
@@ -43,8 +58,8 @@ sub load_status_msgs {
     my $token  = $self->request->params->{$self->token_param} || return;
 
     $self->stash(
-        status_msg => $self->get_status_msg($token),
-        error_msg  => $self->get_error_msg($token),
+        $self->status_msg_stash_key => $self->get_status_msg($token),
+        $self->error_msg_stash_key  => $self->get_error_msg($token),
     );
 }
 
@@ -62,6 +77,7 @@ Catalyst::Plugin::StatusMessage - Handle passing of status (success and error) m
 =head1 SYNOPSIS
 
 In MyApp.pm:
+
     use Catalyst qr/
         StatusMessage
     /;
@@ -88,7 +104,7 @@ Then, in the controller action that corresponds to the redirect above:
         ...
     }
 
-And, to display the output (here using L<Template|Template Toolkit>):
+And, to display the output (here using L<Template Toolkit|Template>):
 
     ...
     <span class="message">[% status_msg %]</span>
@@ -133,7 +149,7 @@ to redirect to the appropriate URL after an action is taken.
 
 =item *
 
-Associates a random 10-digit "token" with each messages, so it's completely
+Associates a random 8-digit "token" with each messages, so it's completely
 unambiguous what message should be shown in each window/tab.
 
 =item *
@@ -164,6 +180,18 @@ to "C<status_msg>".
 
 The name of the URL param that holds the token on the page where you
 want to retrieve/display the status message.  Defaults to "C<mid>".
+
+
+=head2 status_msg_stash_key
+
+The name of the stash key where "success" status messages are loaded
+when C<$c-E<gt>load_status_msgs> is called.  Defaults to C<status_msg>.
+
+
+=head2 error_msg_stash_key
+
+The name of the stash key where error messages are loaded when
+C<$c-E<gt>load_status_msgs> is called.  Defaults to C<error_msg>.
 
 
 =head1 METHODS

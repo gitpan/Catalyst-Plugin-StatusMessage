@@ -20,7 +20,7 @@ my %WriteMakefileArgs = (
   "LICENSE" => "perl",
   "NAME" => "Catalyst::Plugin::StatusMessage",
   "PREREQ_PM" => {},
-  "VERSION" => "0.002000",
+  "VERSION" => "0.003000",
   "test" => {
     "TESTS" => "t/*.t t/author/*.t"
   }
