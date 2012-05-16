@@ -16,4 +16,4 @@ requires:
   Catalyst: 5.80000
   Sub::Name: 0
   strictures: 0
-version: 1.001000
+version: 1.002000

@@ -1,6 +1,6 @@
 package Catalyst::Plugin::StatusMessage;
 {
-  $Catalyst::Plugin::StatusMessage::VERSION = '1.001000';
+  $Catalyst::Plugin::StatusMessage::VERSION = '1.002000';
 }
 
 use strictures 1;
@@ -65,9 +65,11 @@ approach can leave the wrong URL in the user's browser.
 
 =item *
 
-Using $c->flash: This allows the application to redirect to an
-appropriate URL, but it can display lead to a race condition where the
-wrong status message is displayed in the wrong browser window or tab.
+Using $c->flash: The "flash" feature does provide a mechanism where the
+application can redirect to an appropriate URL, but it can also lead to
+a race condition where the wrong status message is displayed in the
+wrong browser window or tab (and can therefore be confusing to the users
+of your application).
 
 =item *
 
@@ -89,7 +91,7 @@ to redirect to the appropriate URL after an action is taken.
 
 =item *
 
-Associates a random 8-digit "token" with each messages, so it's completely
+Associates a random 8-digit "token" with each message, so it's completely
 unambiguous what message should be shown in each window/tab.
 
 =item *
@@ -113,7 +115,7 @@ messages the first time.
 
 Load both messages that match the token parameter on the URL (e.g.,
 http://myserver.com/widgits/list?mid=1234567890) into the stash
-for display by the view.
+for display by the viewer.
 
 In general, you will want to include this in an C<auto> or "base" (if
 using Chained dispatch) controller action.  Then, if you have a
@@ -169,7 +171,8 @@ can be configured in
 
 =head1 INTERNALS
 
-You snormally shouldn't need any of this, but just in case...
+Note: You normally shouldn't need any of the information in this section
+to use L<Catalyst::Plugin::StatusMessage>.
 
 
 =head2 get_error_msg
