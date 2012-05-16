@@ -1,4 +1,9 @@
 
+0.004000    2012-05-14
+    Major revamp to work as plugin vs. component
+    A big thanks to MST for working his magic
+    Add new tests via Catalyst::Test
+    Add more documentation
 
 0.003000    2011-08-31
     Make stash keys configurable

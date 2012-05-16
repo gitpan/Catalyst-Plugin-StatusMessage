@@ -9,8 +9,8 @@ use ExtUtils::MakeMaker 6.30;
 
 
 my %WriteMakefileArgs = (
-  "ABSTRACT" => "Handle passing of status (success and error) messages between screens",
-  "AUTHOR" => "Kennedy Clark <hkclark\@gmail.com>",
+  "ABSTRACT" => "Handle passing of status (success and error)\nmessages between screens of a web application.",
+  "AUTHOR" => "Kennedy Clark <hkclark\@cpan.org>",
   "BUILD_REQUIRES" => {},
   "CONFIGURE_REQUIRES" => {
     "ExtUtils::MakeMaker" => "6.30"
@@ -19,10 +19,14 @@ my %WriteMakefileArgs = (
   "EXE_FILES" => [],
   "LICENSE" => "perl",
   "NAME" => "Catalyst::Plugin::StatusMessage",
-  "PREREQ_PM" => {},
-  "VERSION" => "0.003000",
+  "PREREQ_PM" => {
+    "Catalyst" => "5.80000",
+    "Sub::Name" => 0,
+    "strictures" => 0
+  },
+  "VERSION" => "1.001000",
   "test" => {
-    "TESTS" => "t/*.t t/author/*.t"
+    "TESTS" => "t/*.t"
   }
 );
 

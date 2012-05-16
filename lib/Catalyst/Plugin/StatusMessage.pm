@@ -1,77 +1,16 @@
 package Catalyst::Plugin::StatusMessage;
-
-BEGIN {
-    $Catalyst::Plugin::StatusMessage::VERSION = '0.003000';
-}
-# ABSTRACT: Handle passing of status (success and error) messages between screens
-
-use Moose;
-use namespace::autoclean;
-
-# The location inside $c->session where messages will be stored
-has 'session_prefix' => (
-    is      => 'ro',
-    isa     => 'Str',
-    default => 'status_msg',
-);
-
-# The name of the URL param that holds the token
-has 'token_param' => (
-    is      => 'ro',
-    isa     => 'Str',
-    default => 'mid', # For "Message ID"
-);
-
-# The stash key where status messages are loaded
-has 'status_msg_stash_key' => (
-    is      => 'ro',
-    isa     => 'Str',
-    default => 'status_msg',
-);
-
-# The stash key where status messages are loaded
-has 'error_msg_stash_key' => (
-    is      => 'ro',
-    isa     => 'Str',
-    default => 'error_msg',
-);
-
-
-# Holds and handles normal (non-error) messages
-with 'Catalyst::Plugin::StatusMessageTypeRole' => {
-    type    => 'status_msg',
-    handles => [qw/get_status_msg set_status_msg/],
-};
-
-# Holds and handles error messages
-with 'Catalyst::Plugin::StatusMessageTypeRole' => {
-    type    => 'error_msg',
-    handles => [qw/get_error_msg set_error_msg/],
-};
-
-
-# Load both messages that match the token param (mid=###) into the stash
-# for display by the view.
-sub load_status_msgs {
-    my ($self) = @_;
-
-    my $token  = $self->request->params->{$self->token_param} || return;
-
-    $self->stash(
-        $self->status_msg_stash_key => $self->get_status_msg($token),
-        $self->error_msg_stash_key  => $self->get_error_msg($token),
-    );
+{
+  $Catalyst::Plugin::StatusMessage::VERSION = '1.001000';
 }
 
-__PACKAGE__->meta->make_immutable;
+use strictures 1;
+use Sub::Name ();
 
-__END__
-
-=pod
 
 =head1 NAME
 
-Catalyst::Plugin::StatusMessage - Handle passing of status (success and error) messages between screens of a web application.
+Catalyst::Plugin::StatusMessage - Handle passing of status (success and error)
+messages between screens of a web application.
 
 
 =head1 SYNOPSIS
@@ -82,10 +21,10 @@ In MyApp.pm:
         StatusMessage
     /;
 
-In controller where you want to save a message for display on the next
-page (here, once the "delete" action taken is complete, we are
-redirecting to a "list" page to show the status [we don't want to leave
-the delete action in the browser URL]):
+In controller where you want to save a message for display on the next page
+(here, once the "delete" action taken is complete, we are redirecting to a
+"list" page to show the status [we don't want to leave the delete action in the
+browser URL]):
 
    $c->response->redirect($c->uri_for($self->action_for('list'),
         {mid => $c->set_status_msg("Deleted widget")}));
@@ -138,6 +77,7 @@ refresh.
 
 =back
 
+
 This plugin attempts to address these issues through the following mechanisms:
 
 =over 4
@@ -166,6 +106,21 @@ messages the first time.
 =back
 
 
+=head1 METHODS
+
+
+=head2 load_status_msgs
+
+Load both messages that match the token parameter on the URL (e.g.,
+http://myserver.com/widgits/list?mid=1234567890) into the stash
+for display by the view.
+
+In general, you will want to include this in an C<auto> or "base" (if
+using Chained dispatch) controller action.  Then, if you have a
+"template wrapper page" that displays both "C<status_msg>" and
+"C<error_msg>", you can automatically and safely send status messages to
+any related controller action.
+
 
 =head1 CONFIGURABLE OPTIONS
 
@@ -190,35 +145,185 @@ when C<$c-E<gt>load_status_msgs> is called.  Defaults to C<status_msg>.
 
 =head2 error_msg_stash_key
 
+
 The name of the stash key where error messages are loaded when
 C<$c-E<gt>load_status_msgs> is called.  Defaults to C<error_msg>.
 
 
-=head1 METHODS
+=head2 Configuration Example
+
+Here is a quick example showing how Catalyst::Plugin::StatusMessage
+can be configured in 
+
+
+    # Configure Catalyst::Plugin::StatusMessage
+    __PACKAGE__->config(
+        'Plugin::StatusMessage' => {
+            session_prefix          => 'my_status_msg',
+            token_param             => 'my_mid',
+            status_msg_stash_key    => 'my_status_msg',
+            error_msg_stash_key     => 'my_error_msg',
+        }
+    );
+
+
+=head1 INTERNALS
+
+You snormally shouldn't need any of this, but just in case...
+
+
+=head2 get_error_msg
+
+A dynamically generated accessor to retrieve saved error messages
+
+=cut
+
+
+=head2 get_status_msg
+
+A dynamically generated accessor to retrieve saved status messages
+
+=cut
+
+
+=head2 set_error_msg
+
+A dynamically generated accessor to save error messages
+
+=cut
+
+
+=head2 set_status_msg
+
+A dynamically generated accessor to save status messages
+
+=cut
+
+
+=head2 _get_cfg
+
+Subref that handles default values and lets them be overriden from the MyApp
+configuration.
+
+=cut
+
+my $_get_cfg = sub {
+    my ($self) = @_;
+
+    my %config = (
+        session_prefix       =>  'status_msg',
+        token_param          =>  'mid',
+        msg_types            =>  [ qw(status error) ],
+        status_msg_stash_key =>  'status_msg',
+        error_msg_stash_key  =>  'error_msg',
+        %{$self->config->{"Plugin::StatusMessage"} || {}}
+    );
+    \%config;
+};
+
+
+=head2 get_status_message_by_type
+
+Fetch the requested message type from the user's session
+
+=cut
+
+sub get_status_message_by_type {
+    my ($self, $token, $conf, $type) = @_;
+
+    return delete($self->session->{$conf->{session_prefix}}{$type}{$token})||'';
+}
+
+
+=head2 set_status_message_by_type
+
+Save a message to the user's session
+
+=cut
+
+sub set_status_message_by_type {
+    my ($self, $conf, $type, $value) = @_;
+
+    my $token = int(rand(90_000_000))+10_000_000;
+    $self->session->{$conf->{session_prefix}}{$type}{$token} = $value;
+    return $token;
+}
 
 
 =head2 load_status_msgs
 
-Load both messages that match the token parameter on the URL (e.g.,
-http://myserver.com/widgits/list?mid=1234567890) into the stash
+Load both messages that match the token param (mid=###) into the stash
 for display by the view.
 
-In general, you will want to include this in an C<auto> or "base" (if
-using Chained dispatch) controller action.  Then, if you have a
-"template wrapper page" that displays both "C<status_msg>" and
-"C<error_msg>", you can automatically and safely send status messages to
-any related controller action.
+=cut
+
+sub load_status_msgs {
+    my ($self) = @_;
+
+    my $conf = $self->$_get_cfg;
+
+    my $token  = $self->request->params->{$conf->{token_param}} || return;
+
+    $self->stash(
+        map +(
+            $conf->{"${_}_msg_stash_key"}
+                =>  $self->get_status_message_by_type($token, $conf, $_)
+        ), @{$conf->{msg_types}}
+    );
+}
+
+
+=head2 make_status_message_get_set_methods_for_type
+
+Called at startup to install getters and setters for each type of
+message (status & error)
+
+=cut
+
+sub make_status_message_get_set_methods_for_type {
+    my ($pkg, $type) = @_;
+
+    # Make getter for messages of $type
+    my $get_name = "${pkg}::get_${type}_msg";
+    my $get = Sub::Name::subname($get_name, sub {
+        my ($self, $token) = @_;
+        $self->get_status_message_by_type($token, $self->$_get_cfg, $type);
+    });
+    # Make getter for messages of $type
+    my $set_name = "${pkg}::set_${type}_msg";
+    my $set = Sub::Name::subname($set_name, sub {
+        my ($self, $value) = @_;
+        $self->set_status_message_by_type($self->$_get_cfg, $type, $value);
+    });
+    # Install getter and setter into class
+    {
+        no strict 'refs';
+        *{$get_name} = $get;
+        *{$set_name} = $set;
+    }
+    return;
+}
+
+
+# Add class methods to save/retrieve messages for status & error message types 
+__PACKAGE__->make_status_message_get_set_methods_for_type($_) for qw(status error);
 
 
 =head1 AUTHOR
 
-Kennedy Clark, hkclark@gmail.com
+Kennedy Clark, hkclark@cpan.org
+
+
+With many thanks to Matt Trout (MST) for coaching on the details of Catalyst
+Plugins and for most of the magic behind the current implementation.
 
 
 =head1 COPYRIGHT
 
-This library is free software. You can redistribute it and/or modify it under the same terms as Perl itself.
+This library is free software. You can redistribute it and/or modify it under
+the same terms as Perl itself.
 
 
 =cut
 
+1;
